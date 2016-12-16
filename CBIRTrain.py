@@ -119,14 +119,14 @@ writer=tf.train.SummaryWriter('./Log',graph=tf.get_default_graph())
 # define loss and optimizer
 cost=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(predict,input_Y),name='cost')
 #recode the cost
-tf.scalar_summary('loss',cost)
+tf.scalar_summary('EvalLoss',cost)
 optimizer=tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost,name='opt')
 
 # Evaluate model
 correct_pred = tf.equal(tf.argmax(predict, 1), tf.argmax(input_Y, 1),name='correcct_pred')
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32),name='acc')
 #recode the acc
-tf.scalar_summary('acc',accuracy)
+tf.scalar_summary('EvalAcc',accuracy)
 
 # Initializing the variables
 init = tf.global_variables_initializer()
@@ -141,10 +141,10 @@ sess.run(init)
 dataSource=CifarDataSource.DataSource()
 
 currentBatch=0
-while currentBatch<25:
+while currentBatch<65:
     print('begin batch '+str(currentBatch)+' training:')
     step =1
-    trainImg,trainLab=dataSource.getTrainBatch(2000)
+    trainImg,trainLab=dataSource.getTrainBatch(800)
     while step <= training_iters:
         if useGPU:
             with tf.device('/gpu:0'):
@@ -156,14 +156,20 @@ while currentBatch<25:
                                            input_Y: trainLab,
                                            keey_prob: dropout})
         if step % 10 == 0:
-            mergedResult,loss, acc = sess.run([merged,cost, accuracy], feed_dict={input_X:trainImg,
+            loss, acc = sess.run([cost, accuracy], feed_dict={input_X:trainImg,
                                                               input_Y:trainLab,
                                                               keey_prob:1.})
+            testImg,testLab=dataSource.getTestBatch()
+            mergedResult,testAcc=sess.run([merged,accuracy],feed_dict={input_X:testImg,
+                                                                       input_Y:testLab,
+                                                                       keey_prob:1.})
+
             writer.add_summary(mergedResult,step)
             writer.flush()
             print("Iter " + str(step) + ", Minibatch Loss= " + \
                   "{:.6f}".format(loss) + ", Training Accuracy= " + \
-                  "{:.5f}".format(acc))
+                  "{:.5f}".format(acc) + ", Eval Accuracy= " + \
+                  "{:.5f}".format(testAcc))
         step += 1
     print('one batch done!')
     currentBatch+=1

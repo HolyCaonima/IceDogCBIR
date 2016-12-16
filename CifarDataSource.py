@@ -65,3 +65,7 @@ class DataSource:
 
     def getTestData(self):
         return self.__testImage,self.__testLab
+
+    def getTestBatch(self):
+        place=random.randint(0,9000)
+        return self.__testImage[place:(place+1000)],self.__testLab[place:(place+1000)]
