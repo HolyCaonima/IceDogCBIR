@@ -5,7 +5,7 @@ import CifarDataSource
 
 class_count=10
 learning_rate=0.0001
-training_iters=1200
+training_iters=800
 dropout = 0.5
 useGPU=False
 
@@ -141,10 +141,10 @@ sess.run(init)
 dataSource=CifarDataSource.DataSource()
 
 currentBatch=0
-while currentBatch<65:
+while currentBatch<25:
     print('begin batch '+str(currentBatch)+' training:')
     step =1
-    trainImg,trainLab=dataSource.getTrainBatch(800)
+    trainImg,trainLab=dataSource.getTrainBatch(2000)
     while step <= training_iters:
         if useGPU:
             with tf.device('/gpu:0'):
