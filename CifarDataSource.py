@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 class DataSource:
 
@@ -6,7 +7,6 @@ class DataSource:
     __trainImage=None
     __testLab=None
     __testImage=None
-    __batchPtr=0
 
     def singleClassToShape(self,ary,class_size):
         result=np.zeros([ary.shape[0],class_size],dtype='float32')
@@ -60,9 +60,8 @@ class DataSource:
                 self.__trainImage=np.concatenate((self.__trainImage,tempImage),axis=0)
 
     def getTrainBatch(self,batch_size):
-        temp=self.__batchPtr
-        self.__batchPtr+=batch_size
-        return self.__trainImage[temp:self.__batchPtr],self.__trainLabel[temp:self.__batchPtr]
+        place=random.randint(0,50000-batch_size)
+        return self.__trainImage[place:(place+batch_size)],self.__trainLabel[place:(place+batch_size)]
 
     def getTestData(self):
         return self.__testImage,self.__testLab

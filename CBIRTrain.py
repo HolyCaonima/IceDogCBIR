@@ -7,6 +7,7 @@ class_count=10
 learning_rate=0.0001
 training_iters=1200
 dropout = 0.5
+useGPU=False
 
 keey_prob = tf.placeholder(tf.float32,name='KeepProb')
 input_X = tf.placeholder(tf.float32,shape=[None,32,32,3],name='InputImage')
@@ -145,14 +146,21 @@ while currentBatch<25:
     step =1
     trainImg,trainLab=dataSource.getTrainBatch(2000)
     while step <= training_iters:
-        sess.run(optimizer, feed_dict={input_X:trainImg,
-                                       input_Y:trainLab,
-                                       keey_prob:dropout})
+        if useGPU:
+            with tf.device('/gpu:0'):
+                sess.run(optimizer, feed_dict={input_X:trainImg,
+                                               input_Y:trainLab,
+                                               keey_prob:dropout})
+        else:
+            sess.run(optimizer, feed_dict={input_X: trainImg,
+                                           input_Y: trainLab,
+                                           keey_prob: dropout})
         if step % 10 == 0:
             mergedResult,loss, acc = sess.run([merged,cost, accuracy], feed_dict={input_X:trainImg,
                                                               input_Y:trainLab,
                                                               keey_prob:1.})
             writer.add_summary(mergedResult,step)
+            writer.flush()
             print("Iter " + str(step) + ", Minibatch Loss= " + \
                   "{:.6f}".format(loss) + ", Training Accuracy= " + \
                   "{:.5f}".format(acc))
