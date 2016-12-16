@@ -5,9 +5,12 @@ import CifarDataSource
 
 class_count=10
 learning_rate=0.0001
-training_iters=800
+training_iters=600
 dropout = 0.5
 useGPU=False
+save_dir='./Save'
+model_name='model.mod'
+prog_name='prog.cfg'
 
 keey_prob = tf.placeholder(tf.float32,name='KeepProb')
 input_X = tf.placeholder(tf.float32,shape=[None,32,32,3],name='InputImage')
@@ -92,6 +95,38 @@ def getBatch(readers,batchSize):
         print(len(readers))
         vec.append(readers[i].getBatch(batchSize))
 
+def modelLoadOrInit(sess,saver):
+    # return current batch and eval step
+    import os
+    if not os.path.exists(save_dir):
+        print('dir no exists, create save model dir')
+        os.mkdir(save_dir)
+    if (not os.path.exists(save_dir+'/'+model_name)) or (not os.path.exists(save_dir+'/'+prog_name)):
+        # Initializing the variables
+        print('model no exists, init all variables')
+        init = tf.global_variables_initializer()
+        sess.run(init)
+        return 0,1
+    else:
+        print('model exists, load variables from model')
+        saver.restore(sess,save_dir+'/'+model_name)
+        f=open(save_dir+'/'+prog_name,'r')
+        line=f.readline()
+        line=line.split(':')
+        f.close()
+        return int(line[0]),int(line[1])
+
+def saveModel(sess,saver,currentBatch,evalStep):
+    print('saving model')
+    saver.save(sess,save_dir+'/'+model_name)
+    import os
+    if os.path.exists(save_dir+'/'+prog_name):
+        os.remove(save_dir+'/'+prog_name)
+    f=open(save_dir+'/'+model_name,'w')
+    f.write(str(currentBatch)+':'+str(evalStep))
+    f.close()
+    print('model saved')
+
 #read config
 cfg=open('trainConfig.cfg')
 cfg=cfg.read()
@@ -128,19 +163,21 @@ accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32),name='acc')
 #recode the acc
 tf.scalar_summary('EvalAcc',accuracy)
 
-# Initializing the variables
-init = tf.global_variables_initializer()
-
 # Graph drawer
 merged = tf.merge_all_summaries()
 
+# Create saver
+saver = tf.train.Saver()
+
 sess=tf.Session()
-sess.run(init)
+# Load or init model
+currentBatch,evalStep = modelLoadOrInit(sess,saver)
 
 # read cifar_10 data
 dataSource=CifarDataSource.DataSource()
 
-currentBatch=0
+#evalStep=1
+#currentBatch=0
 while currentBatch<25:
     print('begin batch '+str(currentBatch)+' training:')
     step =1
@@ -164,15 +201,18 @@ while currentBatch<25:
                                                                        input_Y:testLab,
                                                                        keey_prob:1.})
 
-            writer.add_summary(mergedResult,step)
+            writer.add_summary(mergedResult,evalStep)
             writer.flush()
             print("Iter " + str(step) + ", Minibatch Loss= " + \
                   "{:.6f}".format(loss) + ", Training Accuracy= " + \
                   "{:.5f}".format(acc) + ", Eval Accuracy= " + \
                   "{:.5f}".format(testAcc))
+
         step += 1
+        evalStep += 1
     print('one batch done!')
     currentBatch+=1
+    saveModel(sess, saver,currentBatch,evalStep)
 
 print("Optimization Finished!")
 # Calculate accuracy
