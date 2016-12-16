@@ -9,7 +9,7 @@ training_iters=600
 dropout = 0.5
 useGPU=False
 save_dir='./Save'
-model_name='model.mod'
+model_name='model'
 prog_name='prog.cfg'
 
 keey_prob = tf.placeholder(tf.float32,name='KeepProb')
@@ -101,7 +101,7 @@ def modelLoadOrInit(sess,saver):
     if not os.path.exists(save_dir):
         print('dir no exists, create save model dir')
         os.mkdir(save_dir)
-    if (not os.path.exists(save_dir+'/'+model_name)) or (not os.path.exists(save_dir+'/'+prog_name)):
+    if (not os.path.exists(save_dir+'/'+model_name+'.index')) or (not os.path.exists(save_dir+'/'+prog_name)):
         # Initializing the variables
         print('model no exists, init all variables')
         init = tf.global_variables_initializer()
