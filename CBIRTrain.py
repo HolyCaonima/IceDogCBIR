@@ -122,7 +122,7 @@ def saveModel(sess,saver,currentBatch,evalStep):
     import os
     if os.path.exists(save_dir+'/'+prog_name):
         os.remove(save_dir+'/'+prog_name)
-    f=open(save_dir+'/'+model_name,'w')
+    f=open(save_dir+'/'+prog_name,'w')
     f.write(str(currentBatch)+':'+str(evalStep))
     f.close()
     print('model saved')
